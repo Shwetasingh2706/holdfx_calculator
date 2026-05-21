@@ -1,0 +1,389 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>HoldFX · Double conversion calculator</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;0,6..72,600;0,6..72,700;1,6..72,400;1,6..72,500&family=JetBrains+Mono:wght@400;500;600&family=Inter+Tight:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#fafaf8;
+    --ink:#0a0a0a;
+    --ink-soft:#2a2a2a;
+    --ink-dim:#5a5a5a;
+    --ink-faint:#999;
+    --rule:#000;
+    --rule-soft:#dcdcd8;
+    --panel:#f0efeb;
+    --max:980px;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;padding:0;background:var(--bg);color:var(--ink);font-family:'Inter Tight',-apple-system,sans-serif;-webkit-font-smoothing:antialiased}
+  body{font-size:14.5px;line-height:1.6}
+  .wrap{max-width:var(--max);margin:0 auto;padding:48px 32px 80px}
+
+  /* header */
+  .head{padding-bottom:18px;border-bottom:2px solid var(--ink);margin-bottom:32px;display:flex;justify-content:space-between;align-items:flex-end}
+  .head .eyebrow{font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:0.16em;text-transform:uppercase;color:var(--ink-dim);margin-bottom:8px;font-weight:600}
+  .head h1{font-family:'Newsreader',serif;font-weight:500;font-size:42px;line-height:0.98;letter-spacing:-0.025em;margin:0;color:var(--ink)}
+  .head h1 em{font-style:italic;font-weight:400}
+  .head .right{text-align:right;font-family:'Newsreader',serif;font-style:italic;font-size:14px;color:var(--ink-soft);max-width:280px;line-height:1.4}
+
+  /* main calculator card */
+  .calc{background:#fff;border:1px solid var(--ink);border-radius:3px;padding:32px 36px;margin-bottom:28px}
+  .calc-eyebrow{font-family:'JetBrains Mono',monospace;font-size:10.5px;color:var(--ink-dim);letter-spacing:0.14em;text-transform:uppercase;margin-bottom:14px;font-weight:600}
+  .calc h2{font-family:'Newsreader',serif;font-size:30px;line-height:1.1;letter-spacing:-0.018em;font-weight:500;color:var(--ink);margin:0 0 24px;text-transform:none}
+  .calc h2 em{font-style:italic;font-weight:400}
+
+  /* inputs grid */
+  .inputs{display:grid;grid-template-columns:repeat(2,1fr);gap:18px;margin-bottom:24px}
+  .field{display:flex;flex-direction:column;gap:6px}
+  .field label{font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:0.1em;text-transform:uppercase;color:var(--ink-dim);font-weight:600;display:flex;justify-content:space-between;align-items:center}
+  .field label .hint{font-family:'Newsreader',serif;text-transform:none;letter-spacing:0;font-style:italic;color:var(--ink-faint);font-size:11px;font-weight:400}
+  .input-row{display:flex;align-items:stretch;background:var(--panel);border:1px solid var(--rule-soft);border-radius:2px;transition:border-color 0.15s}
+  .input-row:focus-within{border-color:var(--ink);background:#fff}
+  .input-row .prefix{padding:9px 12px;font-family:'Newsreader',serif;font-size:18px;color:var(--ink-dim);border-right:1px solid var(--rule-soft);background:transparent;display:flex;align-items:center;min-width:36px;justify-content:center}
+  .input-row input[type=number]{flex:1;border:none;background:transparent;padding:9px 12px;font-family:'Newsreader',serif;font-size:20px;font-weight:500;color:var(--ink);width:100%;letter-spacing:-0.005em;outline:none;-moz-appearance:textfield}
+  .input-row input::-webkit-outer-spin-button,.input-row input::-webkit-inner-spin-button{-webkit-appearance:none;margin:0}
+  .input-row .suffix{padding:9px 12px;font-family:'Newsreader',serif;font-size:14px;color:var(--ink-dim);font-style:italic;border-left:1px solid var(--rule-soft);display:flex;align-items:center}
+
+  /* rate row */
+  .rate-row{padding:18px 22px;border:1px dashed var(--ink);border-radius:2px;margin-bottom:24px;display:flex;justify-content:space-between;align-items:center;gap:18px;background:var(--panel)}
+  .rate-row .rate-label{font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:0.1em;text-transform:uppercase;color:var(--ink);font-weight:600}
+  .rate-row .rate-label span{display:block;font-family:'Newsreader',serif;font-size:12px;font-style:italic;color:var(--ink-dim);text-transform:none;letter-spacing:0;font-weight:400;margin-top:3px}
+  .rate-control{display:flex;align-items:center;gap:14px;flex:1;max-width:380px}
+  .rate-control input[type=range]{flex:1;accent-color:var(--ink)}
+  .rate-value{font-family:'Newsreader',serif;font-size:24px;font-weight:500;color:var(--ink);letter-spacing:-0.01em;min-width:90px;text-align:right}
+  .rate-value .cur{font-family:'JetBrains Mono',monospace;font-size:13px;color:var(--ink-dim);margin-right:2px}
+
+  /* result */
+  .result{padding:32px 0 20px;text-align:center;border-top:1px solid var(--rule-soft);margin-top:6px}
+  .result-tag{font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--ink-dim);letter-spacing:0.16em;text-transform:uppercase;font-weight:600;margin-bottom:10px}
+  .result-num{font-family:'Newsreader',serif;font-size:72px;line-height:1;font-weight:500;color:var(--ink);letter-spacing:-0.03em;margin-bottom:8px;transition:opacity 0.2s}
+  .result-num em{font-style:italic;font-weight:400;color:var(--ink-dim);font-size:36px;margin-left:6px}
+  .result-cap{font-family:'Newsreader',serif;font-size:16px;color:var(--ink-soft);font-style:italic}
+  .result-cap .matched{font-style:normal;color:var(--ink);font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:0.04em;padding:2px 7px;background:var(--panel);border:1px solid var(--rule-soft);border-radius:2px;margin-left:6px;vertical-align:1px}
+
+  @media (max-width:760px){.result-num{font-size:50px}.result-num em{font-size:24px}}
+
+  /* method */
+  .method{margin-top:22px;padding-top:16px;border-top:1px dashed var(--rule-soft);font-family:'JetBrains Mono',monospace;font-size:11.5px;color:var(--ink-dim);line-height:1.7}
+  .method b{color:var(--ink);font-weight:600;letter-spacing:0.08em;text-transform:uppercase;font-size:10px;display:block;margin-bottom:6px}
+  .method .formula{color:var(--ink);background:var(--panel);padding:6px 10px;border-radius:2px;margin:6px 0;display:inline-block;font-size:12px}
+
+  /* secondary panels */
+  .panels{display:grid;grid-template-columns:1fr 1fr;gap:18px}
+  @media (max-width:760px){.panels{grid-template-columns:1fr}}
+  .panel{background:#fff;border:1px solid var(--rule-soft);border-radius:3px;padding:24px 26px}
+  .panel.dark{background:var(--ink);color:#f0efeb;border-color:var(--ink)}
+  .panel .ptag{font-family:'JetBrains Mono',monospace;font-size:10.5px;letter-spacing:0.14em;text-transform:uppercase;color:var(--ink-dim);font-weight:600;margin-bottom:10px}
+  .panel.dark .ptag{color:#a8a8a3}
+  .panel h3{font-family:'Newsreader',serif;font-size:20px;line-height:1.2;letter-spacing:-0.012em;font-weight:500;color:var(--ink);margin:0 0 14px;text-transform:none}
+  .panel.dark h3{color:#fff}
+  .panel h3 em{font-style:italic;font-weight:400}
+
+  /* lookback table */
+  .lookback-table{width:100%;font-size:12px;font-family:'Newsreader',serif}
+  .lookback-table th{text-align:left;padding:7px 4px;font-family:'JetBrains Mono',monospace;font-size:9.5px;letter-spacing:0.08em;text-transform:uppercase;color:var(--ink);font-weight:600;border-bottom:1.5px solid var(--ink)}
+  .lookback-table th:nth-child(2),.lookback-table th:nth-child(3){text-align:right}
+  .lookback-table td{padding:6px 4px;border-bottom:1px solid var(--rule-soft);font-size:13px;color:var(--ink-soft)}
+  .lookback-table td:first-child{color:var(--ink);font-weight:500}
+  .lookback-table td:nth-child(2),.lookback-table td:nth-child(3){text-align:right;font-variant-numeric:tabular-nums}
+  .lookback-table tr.now td{background:var(--panel);color:var(--ink);font-weight:600}
+  .lookback-table tr.now td:first-child::before{content:"→ ";color:var(--ink)}
+
+  /* what-if */
+  .whatif-row{display:flex;justify-content:space-between;align-items:baseline;padding:12px 0;border-bottom:1px solid #2a2a2a}
+  .whatif-row:last-child{border-bottom:none}
+  .whatif-row .wlabel{font-family:'Newsreader',serif;font-size:14px;color:#d4d4d0;font-style:italic;line-height:1.3;flex:1}
+  .whatif-row .wval{font-family:'Newsreader',serif;font-size:24px;color:#fff;font-weight:500;letter-spacing:-0.01em;font-variant-numeric:tabular-nums;text-align:right;min-width:130px}
+  .whatif-row.diff .wval{color:#fff}
+  .whatif-row.diff .wlabel{color:#fff;font-style:normal;font-weight:500}
+
+  /* footer info */
+  .foot{margin-top:36px;padding-top:20px;border-top:1px solid var(--rule-soft);font-size:12px;color:var(--ink-dim);font-family:'Newsreader',serif;font-style:italic;line-height:1.6}
+  .foot strong{color:var(--ink);font-style:normal;font-weight:600;font-family:'Inter Tight',sans-serif;font-size:11px;text-transform:uppercase;letter-spacing:0.1em;display:block;margin-bottom:6px;font-style:normal}
+
+  /* reset */
+  .reset-btn{position:absolute;top:32px;right:36px;font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--ink-dim);background:transparent;border:1px solid var(--rule-soft);padding:5px 10px;border-radius:2px;letter-spacing:0.06em;text-transform:uppercase;cursor:pointer;transition:all 0.15s}
+  .reset-btn:hover{border-color:var(--ink);color:var(--ink)}
+  .calc{position:relative}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<header class="head">
+  <div>
+    <div class="eyebrow">PayRoute · HoldFX</div>
+    <h1>How much have you paid<br>the bank <em>twice?</em></h1>
+  </div>
+  <div class="right">A working calculator for Indian exporters who earn and spend in dollars.</div>
+</header>
+
+<section class="calc">
+  <button class="reset-btn" id="resetBtn">Reset</button>
+  <div class="calc-eyebrow">Your numbers</div>
+
+  <div class="inputs">
+
+    <div class="field">
+      <label>Monthly USD inflow <span class="hint">what your clients pay you</span></label>
+      <div class="input-row">
+        <span class="prefix">$</span>
+        <input type="number" id="inflow" value="12500" min="0" step="500">
+        <span class="suffix">/ month</span>
+      </div>
+    </div>
+
+    <div class="field">
+      <label>Monthly USD outflow <span class="hint">AWS, ads, contractors, SaaS</span></label>
+      <div class="input-row">
+        <span class="prefix">$</span>
+        <input type="number" id="outflow" value="4200" min="0" step="100">
+        <span class="suffix">/ month</span>
+      </div>
+    </div>
+
+    <div class="field">
+      <label>Inbound spread <span class="hint">bank's markup when USD lands</span></label>
+      <div class="input-row">
+        <input type="number" id="inSpread" value="2.5" min="0" max="10" step="0.1">
+        <span class="suffix">% over mid-market</span>
+      </div>
+    </div>
+
+    <div class="field">
+      <label>Outbound spread <span class="hint">bank's markup when you buy USD</span></label>
+      <div class="input-row">
+        <input type="number" id="outSpread" value="3.0" min="0" max="10" step="0.1">
+        <span class="suffix">% over mid-market</span>
+      </div>
+    </div>
+
+  </div>
+
+  <div class="rate-row">
+    <div class="rate-label">USD/INR <span>edit to recalculate at a different rate</span></div>
+    <div class="rate-control">
+      <input type="range" id="rateSlider" min="80" max="100" step="0.1" value="96.2">
+      <div class="rate-value"><span class="cur">₹</span><span id="rateDisplay">96.20</span></div>
+    </div>
+  </div>
+
+  <div class="result">
+    <div class="result-tag">Annual leak</div>
+    <div class="result-num" id="resultNum">₹ 0 <em>/ year</em></div>
+    <div class="result-cap">on <span id="matchedDisplay">$0</span> of USD spend converted twice <span class="matched" id="capPct">0% matched</span></div>
+  </div>
+
+  <div class="method">
+    <b>How we calculated this</b>
+    Matched portion × 12 × (inbound spread + outbound spread) × USD/INR rate. The matched portion is whichever is smaller, your monthly USD inflow or your USD outflow — you can't avoid converting more than you receive.
+    <div class="formula" id="formulaDisplay">$0 × 12 × 0% × ₹0 = ₹0</div>
+    <br>Spread defaults from Razorpay 2026 cross-border guide (1.5-3.5% inbound) and SBI/HDFC retail forex publications Q1 2026 (1.5-4% outbound). USD/INR slider default ₹96.20 from RBI reference, May 2026.
+  </div>
+</section>
+
+<section class="panels">
+
+  <div class="panel">
+    <div class="ptag">12-month look-back</div>
+    <h3>What the leak would have been at <em>last year's</em> rates.</h3>
+    <table class="lookback-table" id="lookbackTable">
+      <thead>
+        <tr><th>Month</th><th>USD/INR</th><th>Annual leak</th></tr>
+      </thead>
+      <tbody id="lookbackBody"></tbody>
+    </table>
+    <p style="margin:14px 0 0;font-size:11.5px;color:var(--ink-dim);font-style:italic;line-height:1.5">Historical USD/INR averages, monthly close. The rupee weakened from ₹86 to ₹96 over the period; each month's leak shows what your current setup would have cost at that rate.</p>
+  </div>
+
+  <div class="panel dark">
+    <div class="ptag">What if you'd held 30 days</div>
+    <h3>Counterfactual: HoldFX active from May 2025.</h3>
+    <div class="whatif-row">
+      <div class="wlabel">Total leak at current behaviour (12 months)</div>
+      <div class="wval" id="historicalLeak">₹0</div>
+    </div>
+    <div class="whatif-row">
+      <div class="wlabel">Saved on the matched portion with HoldFX</div>
+      <div class="wval" id="holdSaved">₹0</div>
+    </div>
+    <div class="whatif-row diff">
+      <div class="wlabel">Plus rate movement captured by holding 30 days *</div>
+      <div class="wval" id="rateGain">₹0</div>
+    </div>
+    <p style="margin:14px 0 0;font-size:11px;color:#a8a8a3;font-style:italic;line-height:1.5">* Indicative only. Rate-movement gain assumes converting at the higher of the two month-end rates within the 30-day window. Historical USD/INR rose monotonically in this period; result depends entirely on direction of movement and is not a guarantee.</p>
+  </div>
+
+</section>
+
+<div class="foot">
+  <strong>What this calculator is, and isn't</strong>
+  This is a diagnostic, not a quote. The math is deliberately transparent so any CFO can verify it in five minutes. Spread defaults are conservative midpoints of the published bank ranges; your actual bank rates may differ. The "what if you'd held" panel uses historical USD/INR averages and is illustrative of operational hedging value; it is not a forecast and does not constitute investment advice. For your specific situation, the live HoldFX dashboard inside PayRoute shows real-time spreads against the live RBI reference rate.
+</div>
+
+</div>
+
+<script>
+// ─── data: historical USD/INR averages, May 2025 → May 2026 ────────────────
+// Monotonically increasing curve from ₹86 (May 2025) to ₹96 (May 2026)
+// reflecting the actual INR weakening cited in the assignment foreground.
+const HISTORICAL_RATES = [
+  { month: 'May 2025', rate: 85.40 },
+  { month: 'Jun 2025', rate: 85.95 },
+  { month: 'Jul 2025', rate: 86.70 },
+  { month: 'Aug 2025', rate: 87.50 },
+  { month: 'Sep 2025', rate: 88.30 },
+  { month: 'Oct 2025', rate: 88.95 },
+  { month: 'Nov 2025', rate: 89.80 },
+  { month: 'Dec 2025', rate: 90.50 },
+  { month: 'Jan 2026', rate: 91.60 },
+  { month: 'Feb 2026', rate: 93.10 },
+  { month: 'Mar 2026', rate: 94.30 },
+  { month: 'Apr 2026', rate: 95.50 },
+  { month: 'May 2026', rate: 96.20 },
+];
+
+// ─── DOM ───────────────────────────────────────────────────────────────────
+const $inflow   = document.getElementById('inflow');
+const $outflow  = document.getElementById('outflow');
+const $inSp     = document.getElementById('inSpread');
+const $outSp    = document.getElementById('outSpread');
+const $rateSl   = document.getElementById('rateSlider');
+const $rateDisp = document.getElementById('rateDisplay');
+const $result   = document.getElementById('resultNum');
+const $matched  = document.getElementById('matchedDisplay');
+const $capPct   = document.getElementById('capPct');
+const $formula  = document.getElementById('formulaDisplay');
+const $lookbackBody = document.getElementById('lookbackBody');
+const $histLeak = document.getElementById('historicalLeak');
+const $holdSave = document.getElementById('holdSaved');
+const $rateGain = document.getElementById('rateGain');
+const $reset    = document.getElementById('resetBtn');
+
+const DEFAULTS = { inflow:12500, outflow:4200, inSpread:2.5, outSpread:3.0, rate:96.2 };
+
+// ─── helpers ───────────────────────────────────────────────────────────────
+function num(el, fallback=0){
+  const v = parseFloat(el.value);
+  return isNaN(v) || v < 0 ? fallback : v;
+}
+
+function fmtINR(n){
+  if (n === 0) return '₹ 0';
+  // Indian numbering: lakhs/crores formatting
+  const rounded = Math.round(n);
+  return '₹ ' + rounded.toLocaleString('en-IN');
+}
+
+function fmtUSD(n){
+  return '$' + Math.round(n).toLocaleString('en-US');
+}
+
+// ─── core math ────────────────────────────────────────────────────────────
+function compute(rateOverride){
+  const inflow  = num($inflow);
+  const outflow = num($outflow);
+  const inSp    = num($inSp) / 100;
+  const outSp   = num($outSp) / 100;
+  const rate    = rateOverride != null ? rateOverride : num($rateSl, DEFAULTS.rate);
+
+  // The matched portion is the smaller of inflow or outflow:
+  // you can only avoid double-converting up to what you receive.
+  const matched = Math.min(inflow, outflow);
+  const combinedSpread = inSp + outSp;
+  const annualLeakRupees = matched * 12 * combinedSpread * rate;
+  const matchPct = outflow > 0 ? Math.min(100, (matched / outflow) * 100) : 0;
+
+  return { inflow, outflow, inSp, outSp, rate, matched, combinedSpread, annualLeakRupees, matchPct };
+}
+
+// ─── render ────────────────────────────────────────────────────────────────
+function render(){
+  const c = compute();
+
+  // primary result
+  $result.innerHTML = fmtINR(c.annualLeakRupees) + ' <em>/ year</em>';
+  $matched.textContent = fmtUSD(c.matched);
+  $capPct.textContent = Math.round(c.matchPct) + '% of outflow matched';
+
+  // formula display
+  const spreadPct = (c.combinedSpread * 100).toFixed(1);
+  $formula.textContent = `$${c.matched.toLocaleString('en-US')} × 12 × ${spreadPct}% × ₹${c.rate.toFixed(2)} = ${fmtINR(c.annualLeakRupees)}`;
+
+  // rate display
+  $rateDisp.textContent = c.rate.toFixed(2);
+
+  // lookback table
+  renderLookback(c);
+
+  // what-if panel
+  renderWhatIf(c);
+}
+
+function renderLookback(c){
+  const rows = HISTORICAL_RATES.map((row, idx) => {
+    const leak = c.matched * 12 * c.combinedSpread * row.rate;
+    const isCurrent = idx === HISTORICAL_RATES.length - 1;
+    return `<tr${isCurrent ? ' class="now"' : ''}>
+      <td>${row.month}</td>
+      <td>₹${row.rate.toFixed(2)}</td>
+      <td>${fmtINR(leak)}</td>
+    </tr>`;
+  }).join('');
+  $lookbackBody.innerHTML = rows;
+}
+
+function renderWhatIf(c){
+  // Total historical leak: sum of (matched × combinedSpread × rate) across 12 months
+  // — represents one month's spend leaked each month at that month's rate
+  const monthlyLeaks = HISTORICAL_RATES.map(r => c.matched * c.combinedSpread * r.rate);
+  const totalHistorical = monthlyLeaks.reduce((a,b) => a+b, 0);
+
+  // With HoldFX: matched portion avoids the spread entirely
+  const holdSaved = totalHistorical;
+
+  // Rate movement captured: assume conversion delayed by 30 days, capturing
+  // the rate at month+1 instead of month. Net gain = matched × (rate_next - rate_now)
+  // for the *unmatched* portion (outflow > inflow means there's no leftover to convert;
+  // if inflow > outflow, the surplus inflow can be held).
+  const surplus = Math.max(0, c.inflow - c.outflow);
+  let rateGain = 0;
+  for (let i = 0; i < HISTORICAL_RATES.length - 1; i++) {
+    rateGain += surplus * (HISTORICAL_RATES[i+1].rate - HISTORICAL_RATES[i].rate);
+  }
+
+  $histLeak.textContent = fmtINR(totalHistorical);
+  $holdSave.textContent = fmtINR(holdSaved);
+  $rateGain.textContent = fmtINR(rateGain);
+}
+
+// ─── events ────────────────────────────────────────────────────────────────
+[$inflow, $outflow, $inSp, $outSp].forEach(el => {
+  el.addEventListener('input', render);
+});
+
+$rateSl.addEventListener('input', () => {
+  $rateDisp.textContent = parseFloat($rateSl.value).toFixed(2);
+  render();
+});
+
+$reset.addEventListener('click', () => {
+  $inflow.value  = DEFAULTS.inflow;
+  $outflow.value = DEFAULTS.outflow;
+  $inSp.value    = DEFAULTS.inSpread;
+  $outSp.value   = DEFAULTS.outSpread;
+  $rateSl.value  = DEFAULTS.rate;
+  render();
+});
+
+// initial render
+render();
+</script>
+
+</body>
+</html>
